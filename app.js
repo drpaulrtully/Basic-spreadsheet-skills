@@ -477,3 +477,7 @@ if (sheetTasksBtn && sheetAttendanceBtn && sheetTable) {
   // Auto-load first sheet so the learner immediately sees something:
   renderSheet(0);
 })();
+(() => {
+  const el = document.getElementById("sheetTable");
+  if (el) el.textContent = "Viewer script loaded ✅ (waiting for click or auto-load)";
+})();
