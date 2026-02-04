@@ -193,12 +193,16 @@ button.full[aria-expanded="true"]::after{
   box-shadow: var(--shadow);
 }
 
-/* 2 columns */
+/* 2 columns (FIXED: prevents wide content squeezing sidebar) */
 .twoCol{
   display:grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: minmax(0, 1fr) 360px; /* main + stable feedback */
   gap: var(--s5);
   align-items:start;
+}
+/* CRITICAL: allow grid children to shrink without forcing page overflow */
+.twoCol > *{
+  min-width: 0;
 }
 @media (max-width: 980px){
   .twoCol{ grid-template-columns: 1fr; }
@@ -284,6 +288,8 @@ button.full[aria-expanded="true"]::after{
   background:#fff;
   padding: var(--s5);
   box-shadow: var(--shadow-soft);
+  /* keeps the sidebar feeling stable and readable */
+  min-width: 280px;
 }
 
 .feedbackTop{
@@ -526,7 +532,9 @@ button.full[aria-expanded="true"]::after{
   color: var(--muted);
   font-size:12px;
 }
-.sheetCard {
+
+/* ===== Spreadsheet preview (POLISHED + non-breaking layout) ===== */
+.sheetCard{
   border: 1px solid #e6e6ee;
   border-radius: 12px;
   padding: 12px;
@@ -534,62 +542,59 @@ button.full[aria-expanded="true"]::after{
   background: #fff;
 }
 
-.sheetHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.sheetHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap; /* polished: prevents header overflow */
+}
+
+.sheetHeader h3{
+  margin: 0;
+}
+
+.sheetBtns{
+  display:flex;
   gap: 8px;
+  flex-wrap: wrap; /* polished: buttons wrap neatly */
+  align-items:center;
+  justify-content:flex-end;
 }
 
-.sheetBtns {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.sheetTable {
-  margin-top: 10px;
-  max-height: 260px;
-  overflow: auto;
-  border: 1px solid #f0f0f5;
-  border-radius: 8px;
-  padding: 8px;
-  background: #fafafe;
-  font-size: 14px;
-}
-/* ===== Spreadsheet preview styling ===== */
-.sheetTable {
+/* The scrolling container (prevents page-wide overflow) */
+.sheetTable{
   margin-top: 10px;
   max-height: 340px;
-  overflow: auto;
+  overflow: auto;      /* scroll inside card, not the whole page */
+  max-width: 100%;
   border: 1px solid #e6e6ee;
   border-radius: 12px;
   background: #fff;
 }
 
 /* table */
-.sheetPreviewTable {
+.sheetPreviewTable{
   border-collapse: collapse;
   width: 100%;
-  min-width: 900px; /* forces horizontal scroll on small screens */
-  table-layout: fixed; /* makes col widths obey colgroup */
+  table-layout: fixed; /* respects colgroup widths */
   font-size: 14px;
 }
 
 .sheetPreviewTable th,
-.sheetPreviewTable td {
+.sheetPreviewTable td{
   border-bottom: 1px solid #eee;
   padding: 8px 10px;
   text-align: left;
   vertical-align: top;
-  overflow: hidden;          /* prevents text spilling */
-  text-overflow: ellipsis;   /* neat truncation */
-  white-space: nowrap;       /* default: keep tidy */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* allow wrapping for Notes / longer text cells */
 .sheetPreviewTable td.wrap,
-.sheetPreviewTable th.wrap {
+.sheetPreviewTable th.wrap{
   white-space: normal;
   overflow: visible;
   text-overflow: initial;
@@ -597,7 +602,7 @@ button.full[aria-expanded="true"]::after{
 }
 
 /* sticky header */
-.sheetPreviewTable thead th {
+.sheetPreviewTable thead th{
   position: sticky;
   top: 0;
   background: #f7f4ff; /* subtle FEthink tint */
@@ -606,6 +611,6 @@ button.full[aria-expanded="true"]::after{
 }
 
 /* zebra rows */
-.sheetPreviewTable tbody tr:nth-child(even) td {
+.sheetPreviewTable tbody tr:nth-child(even) td{
   background: #fafafe;
 }

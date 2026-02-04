@@ -475,8 +475,8 @@ async function renderSheet(idx) {
     const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: "" });
 
     // Column widths (px) tuned for your two sheets
-    const widthsTaskTracking = [260, 160, 140, 180, 520]; // Task, Owner, Due Date, Status, Notes
-    const widthsAttendance   = [220, 140, 160, 520];      // Name, Day, Status, Notes
+    const widthsTaskTracking = [190, 100, 90, 120, 240]; // Task, Owner, Due Date, Status, Notes
+    const widthsAttendance   = [150, 100, 120, 240];      // Name, Day, Status, Notes
 
     const colWidths = String(name).toLowerCase().includes("attendance")
       ? widthsAttendance
