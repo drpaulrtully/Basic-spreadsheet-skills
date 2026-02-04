@@ -195,11 +195,16 @@ button.full[aria-expanded="true"]::after{
 
 /* 2 columns (FIXED: prevents wide content squeezing sidebar) */
 .twoCol{
-  display:grid;
-  grid-template-columns: minmax(0, 1fr) 360px; /* main + stable feedback */
-  gap: var(--s5);
-  align-items:start;
+  display: grid;
+  grid-template-columns: 1fr;  /* ONE column */
+  gap: 18px;
+  align-items: start;
 }
+
+.twoCol > *{
+  min-width: 0;
+}
+
 /* CRITICAL: allow grid children to shrink without forcing page overflow */
 .twoCol > *{
   min-width: 0;
@@ -589,9 +594,15 @@ button.full[aria-expanded="true"]::after{
   padding: 8px 10px;
   text-align: left;
   vertical-align: top;
-  white-space: normal;         /* 🔒 wrap text */
-  word-break: break-word;     /* 🔒 wrap long strings */
-  overflow-wrap: anywhere;    /* 🔒 wrap emails / long tokens */
+
+  /* Allow wrapping instead of clipping */
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  /* Remove clipping */
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* allow wrapping for Notes / longer text cells */

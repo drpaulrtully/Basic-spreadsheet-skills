@@ -82,6 +82,21 @@
                 <button id="insertTemplateBtn" class="secondary small">Insert template</button>
                 <button id="clearBtn" class="secondary small">Clear</button>
               </div>
+<!-- RIGHT: feedback -->
+        <div class="panel">
+          <h2>Feedback</h2>
+
+          <div class="feedbackCard">
+            <div class="feedbackTop">
+              <div class="metric">
+                <div class="metricLabel">Score</div>
+                <div id="scoreBig" class="metricValue">—</div>
+              </div>
+              <div class="metric">
+                <div class="metricLabel">Word count</div>
+                <div id="wordCountBig" class="metricValue">—</div>
+              </div>
+            </div>
             </div>
 
             <textarea id="answerText" rows="16" placeholder="Write your answer here..."></textarea>
@@ -97,22 +112,6 @@
             </div>
           </div>
         </div>
-
-        <!-- RIGHT: feedback -->
-        <div class="panel">
-          <h2>Feedback</h2>
-
-          <div class="feedbackCard">
-            <div class="feedbackTop">
-              <div class="metric">
-                <div class="metricLabel">Score</div>
-                <div id="scoreBig" class="metricValue">—</div>
-              </div>
-              <div class="metric">
-                <div class="metricLabel">Word count</div>
-                <div id="wordCountBig" class="metricValue">—</div>
-              </div>
-            </div>
 
             <!-- NEW: Strengths (hidden until populated) -->
             <div id="strengthsWrap" class="block" style="display:none;">
