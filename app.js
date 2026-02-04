@@ -394,39 +394,7 @@ submitBtn.addEventListener("click", mark);
 loadConfig().then(() => {
   showGate();
 });
-// --- Spreadsheet viewer (UI-only) ---
-const SHEET_URL = "/data/FEthink_dummy_spreadsheets_with_variants.xlsx";
-const sheetTable = document.getElementById("sheetTable");
-const sheetTasksBtn = document.getElementById("sheetTasksBtn");
-const sheetAttendanceBtn = document.getElementById("sheetAttendanceBtn");
-
-let workbookCache = null;
-
-async function loadWorkbook() {
-  if (workbookCache) return workbookCache;
-  const res = await fetch(SHEET_URL);
-  const buf = await res.arrayBuffer();
-  const wb = XLSX.read(buf, { type: "array" });
-  workbookCache = wb;
-  return wb;
-}
-
-function renderSheetByIndex(idx) {
-  loadWorkbook().then(wb => {
-    const sheetName = wb.SheetNames[idx];
-    const ws = wb.Sheets[sheetName];
-    const html = XLSX.utils.sheet_to_html(ws, { editable: false });
-    sheetTable.innerHTML = html;
-  }).catch(() => {
-    sheetTable.textContent = "Unable to load spreadsheet preview.";
-  });
-}
-
-if (sheetTasksBtn && sheetAttendanceBtn && sheetTable) {
-  sheetTasksBtn.addEventListener("click", () => renderSheetByIndex(0));      // Task Tracking
-  sheetAttendanceBtn.addEventListener("click", () => renderSheetByIndex(1)); // Attendance
-}
-// --- Spreadsheet viewer (UI-only diagnostic + render) ---
+// --- Spreadsheet viewer (single, clean) ---
 (() => {
   const SHEET_URL = "/data/FEthink_dummy_spreadsheets_with_variants.xlsx";
 
@@ -434,7 +402,6 @@ if (sheetTasksBtn && sheetAttendanceBtn && sheetTable) {
   const sheetTasksBtn = document.getElementById("sheetTasksBtn");
   const sheetAttendanceBtn = document.getElementById("sheetAttendanceBtn");
 
-  // If the viewer HTML isn't present on this page, do nothing.
   if (!sheetTable || !sheetTasksBtn || !sheetAttendanceBtn) return;
 
   let workbookCache = null;
@@ -443,41 +410,34 @@ if (sheetTasksBtn && sheetAttendanceBtn && sheetTable) {
     if (typeof XLSX === "undefined") {
       throw new Error("XLSX library not loaded (check CDN is ABOVE app.js in index.html)");
     }
+    if (workbookCache) return workbookCache;
 
     const res = await fetch(SHEET_URL, { cache: "no-store" });
-    if (!res.ok) {
-      throw new Error(`Fetch failed (${res.status}). Check file path/name in public/data and GitHub deploy.`);
-    }
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
 
     const buf = await res.arrayBuffer();
-    const wb = XLSX.read(buf, { type: "array" });
-    workbookCache = wb;
-    return wb;
+    workbookCache = XLSX.read(buf, { type: "array" });
+    return workbookCache;
   }
 
   async function renderSheet(idx) {
     try {
       sheetTable.textContent = "Loading spreadsheet preview…";
-      const wb = workbookCache || await loadWorkbook();
+      const wb = await loadWorkbook();
 
       const name = wb.SheetNames[idx];
-      if (!name) throw new Error(`Sheet ${idx + 1} not found. Workbook sheets: ${wb.SheetNames.join(", ")}`);
+      if (!name) throw new Error(`Sheet ${idx + 1} not found. Available: ${wb.SheetNames.join(", ")}`);
 
-      const ws = wb.Sheets[name];
-      sheetTable.innerHTML = XLSX.utils.sheet_to_html(ws);
+      sheetTable.innerHTML = XLSX.utils.sheet_to_html(wb.Sheets[name]);
     } catch (e) {
-      sheetTable.textContent = `Unable to load spreadsheet preview. ${e.message}`;
-      console.error(e);
+      sheetTable.textContent = `Unable to load spreadsheet preview: ${e.message}`;
+      console.error("Spreadsheet preview error:", e);
     }
   }
 
-  sheetTasksBtn.addEventListener("click", () => renderSheet(0));      // Task Tracking
-  sheetAttendanceBtn.addEventListener("click", () => renderSheet(1)); // Attendance
+  sheetTasksBtn.addEventListener("click", () => renderSheet(0));
+  sheetAttendanceBtn.addEventListener("click", () => renderSheet(1));
 
-  // Auto-load first sheet so the learner immediately sees something:
+  // Auto-load first sheet:
   renderSheet(0);
-})();
-(() => {
-  const el = document.getElementById("sheetTable");
-  if (el) el.textContent = "Viewer script loaded ✅ (waiting for click or auto-load)";
 })();
