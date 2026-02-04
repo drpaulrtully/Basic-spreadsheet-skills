@@ -562,34 +562,36 @@ button.full[aria-expanded="true"]::after{
   justify-content:flex-end;
 }
 
-/* The scrolling container (prevents page-wide overflow) */
+/* Spreadsheet container: NEVER allow horizontal scroll */
 .sheetTable{
   margin-top: 10px;
-  max-height: 340px;
-  overflow: auto;      /* scroll inside card, not the whole page */
+  max-height: 360px;
+  overflow-y: auto;
+  overflow-x: hidden;   /* 🔒 no sideways scrolling */
   max-width: 100%;
   border: 1px solid #e6e6ee;
   border-radius: 12px;
   background: #fff;
 }
 
-/* table */
+/* Table must fit container width */
 .sheetPreviewTable{
   border-collapse: collapse;
   width: 100%;
-  table-layout: fixed; /* respects colgroup widths */
+  table-layout: fixed;  /* forces columns to fit */
   font-size: 14px;
 }
 
+/* Cells wrap instead of pushing width */
 .sheetPreviewTable th,
 .sheetPreviewTable td{
   border-bottom: 1px solid #eee;
   padding: 8px 10px;
   text-align: left;
   vertical-align: top;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;         /* 🔒 wrap text */
+  word-break: break-word;     /* 🔒 wrap long strings */
+  overflow-wrap: anywhere;    /* 🔒 wrap emails / long tokens */
 }
 
 /* allow wrapping for Notes / longer text cells */
