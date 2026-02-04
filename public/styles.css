@@ -557,3 +557,55 @@ button.full[aria-expanded="true"]::after{
   background: #fafafe;
   font-size: 14px;
 }
+/* ===== Spreadsheet preview styling ===== */
+.sheetTable {
+  margin-top: 10px;
+  max-height: 340px;
+  overflow: auto;
+  border: 1px solid #e6e6ee;
+  border-radius: 12px;
+  background: #fff;
+}
+
+/* table */
+.sheetPreviewTable {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 900px; /* forces horizontal scroll on small screens */
+  table-layout: fixed; /* makes col widths obey colgroup */
+  font-size: 14px;
+}
+
+.sheetPreviewTable th,
+.sheetPreviewTable td {
+  border-bottom: 1px solid #eee;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+  overflow: hidden;          /* prevents text spilling */
+  text-overflow: ellipsis;   /* neat truncation */
+  white-space: nowrap;       /* default: keep tidy */
+}
+
+/* allow wrapping for Notes / longer text cells */
+.sheetPreviewTable td.wrap,
+.sheetPreviewTable th.wrap {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: initial;
+  word-break: break-word;
+}
+
+/* sticky header */
+.sheetPreviewTable thead th {
+  position: sticky;
+  top: 0;
+  background: #f7f4ff; /* subtle FEthink tint */
+  z-index: 1;
+  font-weight: 700;
+}
+
+/* zebra rows */
+.sheetPreviewTable tbody tr:nth-child(even) td {
+  background: #fafafe;
+}

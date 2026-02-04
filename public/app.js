@@ -420,20 +420,74 @@ loadConfig().then(() => {
     return workbookCache;
   }
 
-  async function renderSheet(idx) {
-    try {
-      sheetTable.textContent = "Loading spreadsheet preview…";
-      const wb = await loadWorkbook();
+ function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
-      const name = wb.SheetNames[idx];
-      if (!name) throw new Error(`Sheet ${idx + 1} not found. Available: ${wb.SheetNames.join(", ")}`);
+function renderTableFromAOA(aoa, colWidthsPx = []) {
+  if (!Array.isArray(aoa) || aoa.length === 0) return "<div class='subtle'>No data found.</div>";
 
-      sheetTable.innerHTML = XLSX.utils.sheet_to_html(wb.Sheets[name]);
-    } catch (e) {
-      sheetTable.textContent = `Unable to load spreadsheet preview: ${e.message}`;
-      console.error("Spreadsheet preview error:", e);
-    }
+  const header = aoa[0] || [];
+  const rows = aoa.slice(1);
+
+  const cols = header.map((_, i) => {
+    const w = colWidthsPx[i] ?? 160;
+    return `<col style="width:${w}px">`;
+  }).join("");
+
+  const thead = `<thead><tr>${
+    header.map(h => {
+      const isWrap = /notes|details|comment/i.test(String(h));
+      return `<th class="${isWrap ? "wrap" : ""}">${escapeHtml(h)}</th>`;
+    }).join("")
+  }</tr></thead>`;
+
+  const tbody = `<tbody>${
+    rows.map(r => `<tr>${
+      header.map((_, i) => {
+        const cell = r?.[i] ?? "";
+        const colName = String(header[i] ?? "");
+        const wrap = /notes|details|comment/i.test(colName);
+        return `<td class="${wrap ? "wrap" : ""}" title="${escapeHtml(cell)}">${escapeHtml(cell)}</td>`;
+      }).join("")
+    }</tr>`).join("")
+  }</tbody>`;
+
+  return `<table class="sheetPreviewTable"><colgroup>${cols}</colgroup>${thead}${tbody}</table>`;
+}
+
+async function renderSheet(idx) {
+  try {
+    sheetTable.textContent = "Loading spreadsheet preview…";
+    const wb = await loadWorkbook();
+
+    const name = wb.SheetNames[idx];
+    if (!name) throw new Error(`Sheet ${idx + 1} not found. Available: ${wb.SheetNames.join(", ")}`);
+
+    const ws = wb.Sheets[name];
+
+    // Convert worksheet to array-of-arrays (keeps layout predictable)
+    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: "" });
+
+    // Column widths (px) tuned for your two sheets
+    const widthsTaskTracking = [260, 160, 140, 180, 520]; // Task, Owner, Due Date, Status, Notes
+    const widthsAttendance   = [220, 140, 160, 520];      // Name, Day, Status, Notes
+
+    const colWidths = String(name).toLowerCase().includes("attendance")
+      ? widthsAttendance
+      : widthsTaskTracking;
+
+    sheetTable.innerHTML = renderTableFromAOA(aoa, colWidths);
+  } catch (e) {
+    sheetTable.textContent = `Unable to load spreadsheet preview: ${e.message}`;
+    console.error("Spreadsheet preview error:", e);
   }
+}
 
   sheetTasksBtn.addEventListener("click", () => renderSheet(0));
   sheetAttendanceBtn.addEventListener("click", () => renderSheet(1));
