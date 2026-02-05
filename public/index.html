@@ -42,8 +42,8 @@
       </div>
 
       <div class="headerBtns">
-        <a id="backToCourse" class="linkBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">Back to lesson</a>
-        <a id="nextLesson" class="linkBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">Next: Quiz</a>
+        <a id="backToCourse" class="linkBtn" href="#" target="_blank" rel="noopener noreferrer">Back to lesson</a>
+<a id="nextLesson" class="linkBtn" href="#" target="_blank" rel="noopener noreferrer">Next: Quiz</a>
       </div>
     </div>
   </header>
@@ -52,29 +52,33 @@
     <section class="card">
       <div class="twoCol">
 
-        <!-- LEFT: question + template -->
+        <!-- MAIN: task + spreadsheet + response + feedback (stacked) -->
         <div class="panel">
           <h2>Task</h2>
-          <p id="questionText" class="subtle">
-            Loading question…
-          </p>
-<div class="sheetCard">
-  <div class="sheetHeader">
-    <h3>Example spreadsheet (for this task)</h3>
-    <div class="sheetBtns">
-      <button id="sheetTasksBtn" class="secondary small">Task tracking</button>
-      <button id="sheetAttendanceBtn" class="secondary small">Attendance</button>
-      <a class="linkBtn small" href="/data/FEthink_dummy_spreadsheets_with_variants.xlsx" target="_blank" rel="noopener noreferrer">
-        Download (.xlsx)
-      </a>
-    </div>
-  </div>
+          <p id="questionText" class="subtle">Loading question…</p>
 
-  <div id="sheetTable" class="sheetTable subtle">
-    Click a button above to view the spreadsheet.
-  </div>
-</div>
+          <!-- Spreadsheet preview card -->
+          <div class="sheetCard">
+            <div class="sheetHeader">
+              <h3>Example spreadsheet (for this task)</h3>
+              <div class="sheetBtns">
+                <button id="sheetTasksBtn" class="secondary small">Task tracking</button>
+                <button id="sheetAttendanceBtn" class="secondary small">Attendance</button>
+                <a class="linkBtn small"
+                   href="/data/FEthink_dummy_spreadsheets_with_variants.xlsx"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                  Download (.xlsx)
+                </a>
+              </div>
+            </div>
 
+            <div id="sheetTable" class="sheetTable subtle">
+              Click a button above to view the spreadsheet.
+            </div>
+          </div>
+
+          <!-- Response box -->
           <div class="templateBox">
             <div class="templateHeader">
               <h3>Response template</h3>
@@ -82,21 +86,6 @@
                 <button id="insertTemplateBtn" class="secondary small">Insert template</button>
                 <button id="clearBtn" class="secondary small">Clear</button>
               </div>
-<!-- RIGHT: feedback -->
-        <div class="panel">
-          <h2>Feedback</h2>
-
-          <div class="feedbackCard">
-            <div class="feedbackTop">
-              <div class="metric">
-                <div class="metricLabel">Score</div>
-                <div id="scoreBig" class="metricValue">—</div>
-              </div>
-              <div class="metric">
-                <div class="metricLabel">Word count</div>
-                <div id="wordCountBig" class="metricValue">—</div>
-              </div>
-            </div>
             </div>
 
             <textarea id="answerText" rows="16" placeholder="Write your answer here..."></textarea>
@@ -111,74 +100,86 @@
               Below this, you’ll be asked to add more before feedback is shown.
             </div>
           </div>
-        </div>
 
-            <!-- NEW: Strengths (hidden until populated) -->
-            <div id="strengthsWrap" class="block" style="display:none;">
-              <h3>What you did well</h3>
-              <ul id="strengthsList" class="bullets"></ul>
-            </div>
-
-            <!-- NEW: Tags (hidden until populated) -->
-            <div id="tagsWrap" class="block" style="display:none;">
-              <h3>Feedback tags</h3>
-              <div id="tagsRow" class="tagsRow"></div>
-            </div>
-
-            <!-- NEW: Simple grid (hidden until populated) -->
-            <div id="gridWrap" class="block" style="display:none;">
-              <h3>Strengths & gaps</h3>
-              <div class="grid">
-                <div class="gridRow">
-                  <div class="gridName">Role (who AI should be)</div>
-                  <div id="gEthical" class="gridStatus">—</div>
-                </div>
-                <div class="gridRow">
-                  <div class="gridName">Task (what AI should do)</div>
-                  <div id="gImpact" class="gridStatus">—</div>
-                </div>
-                <div class="gridRow">
-                  <div class="gridName">Context (who/where/when)</div>
-                  <div id="gLegal" class="gridStatus">—</div>
-                </div>
-                <div class="gridRow">
-                  <div class="gridName">Format (structure & constraints)</div>
-                  <div id="gRecs" class="gridStatus">—</div>
-                </div>
-                <div class="gridRow">
-                  <div class="gridName">Overall clarity</div>
-                  <div id="gStructure" class="gridStatus">—</div>
-                </div>
+          <!-- Feedback directly under response box -->
+          <h2 style="margin-top: 18px;">Feedback</h2>
+          <div class="feedbackCard">
+            <div class="feedbackTop">
+              <div class="metric">
+                <div class="metricLabel">Score</div>
+                <div id="scoreBig" class="metricValue">—</div>
+              </div>
+              <div class="metric">
+                <div class="metricLabel">Word count</div>
+                <div id="wordCountBig" class="metricValue">—</div>
               </div>
             </div>
-
-            <!-- Existing: improvement notes -->
-            <div id="feedbackBox" class="feedbackBox" aria-live="polite"></div>
-
-            <!-- NEW: Learn more button + 4-tab panel (hidden by default) -->
-            <div id="learnMoreWrap" class="block" style="display:none;">
-              <button id="learnMoreBtn" class="secondary full" aria-expanded="false">
-                Learn more
-              </button>
-
-              <div id="frameworkPanel" class="frameworkPanel" style="display:none;" aria-hidden="true">
-                <div class="fwRow">
-                  <div class="fwTitle">Example</div>
-                  <div id="learnMoreText" class="fwText">—</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Model answer container: hidden until >=20 words AND server returns it -->
-            <div id="modelWrap" class="modelWrap" style="display:none;">
-              <h3>Example of a strong response</h3>
-              <div class="subtle">Compare your response to the example below. You are not expected to match it exactly.</div>
-              <pre id="modelAnswer" class="modelAnswer"></pre>
-            </div>
-
           </div>
-        </div>
 
+          <!-- Strengths -->
+          <div id="strengthsWrap" class="block" style="display:none;">
+            <h3>What you did well</h3>
+            <ul id="strengthsList" class="bullets"></ul>
+          </div>
+
+          <!-- Tags -->
+          <div id="tagsWrap" class="block" style="display:none;">
+            <h3>Feedback tags</h3>
+            <div id="tagsRow" class="tagsRow"></div>
+          </div>
+
+          <!-- Grid -->
+          <div id="gridWrap" class="block" style="display:none;">
+            <h3>Strengths & gaps</h3>
+            <div class="grid">
+              <div class="gridRow">
+                <div class="gridName">Role (who AI should be)</div>
+                <div id="gEthical" class="gridStatus">—</div>
+              </div>
+              <div class="gridRow">
+                <div class="gridName">Task (what AI should do)</div>
+                <div id="gImpact" class="gridStatus">—</div>
+              </div>
+              <div class="gridRow">
+                <div class="gridName">Context (who/where/when)</div>
+                <div id="gLegal" class="gridStatus">—</div>
+              </div>
+              <div class="gridRow">
+                <div class="gridName">Format (structure & constraints)</div>
+                <div id="gRecs" class="gridStatus">—</div>
+              </div>
+              <div class="gridRow">
+                <div class="gridName">Overall clarity</div>
+                <div id="gStructure" class="gridStatus">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Improvement notes -->
+          <div id="feedbackBox" class="feedbackBox" aria-live="polite"></div>
+
+          <!-- Learn more -->
+          <div id="learnMoreWrap" class="block" style="display:none;">
+            <button id="learnMoreBtn" class="secondary full" aria-expanded="false">
+              Learn more
+            </button>
+
+            <div id="frameworkPanel" class="frameworkPanel" style="display:none;" aria-hidden="true">
+              <div class="fwRow">
+                <div class="fwTitle">Example</div>
+                <div id="learnMoreText" class="fwText">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Model answer -->
+          <div id="modelWrap" class="modelWrap" style="display:none;">
+            <h3>Example of a strong response</h3>
+            <div class="subtle">Compare your response to the example below. You are not expected to match it exactly.</div>
+            <pre id="modelAnswer" class="modelAnswer"></pre>
+          </div>
+
+        </div>
       </div>
     </section>
   </main>
@@ -187,7 +188,7 @@
     <p>FEthink automarker • opened from Payhip (new tab) • return using “Next: Quiz”</p>
   </footer>
 
-<script src="/vendor/xlsx.full.min.js"></script>
-<script src="app.js"></script>
+  <script src="/vendor/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
