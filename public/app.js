@@ -120,10 +120,11 @@ async function loadConfig() {
     const data = await res.json();
     if (!data?.ok) return;
 
-    questionTextEl.textContent = data.questionText || "Task loaded.";
-    targetWordsEl.textContent = data.targetWords || "20-200";
-    MIN_GATE = data.minWordsGate ?? 20;
-    minGateEl.textContent = String(MIN_GATE);
+   if (questionTextEl) questionTextEl.textContent = data.questionText || "Task loaded.";
+if (targetWordsEl) targetWordsEl.textContent = data.targetWords || "20-200";
+
+MIN_GATE = data.minWordsGate ?? 20;
+if (minGateEl) minGateEl.textContent = String(MIN_GATE);
 
     TEMPLATE_TEXT = data.templateText || "";
 
