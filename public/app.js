@@ -1,12 +1,12 @@
 /* =========================================================
    FEthink — AI Prompting Automarker (Level 1)
+   + Spreadsheet preview toggles (Task tracking / Attendance)
    - Access code gate -> signed httpOnly cookie session
    - Marking rules:
        <20 words: "Please add..." only; no score; no extras; no model answer
        >=20 words: score + strengths + tags + grid + improvement notes
-       + optional Learn more framework tabs (collapsed by default)
-       + model answer (collapsed) shown only when server returns it
-   - Target length shown: 20-200 words
+       + optional Learn more panel (collapsed by default)
+       + model answer shown only when server returns it
    ========================================================= */
 
 const gateEl = document.getElementById("gate");
@@ -32,7 +32,7 @@ const scoreBig = document.getElementById("scoreBig");
 const wordCountBig = document.getElementById("wordCountBig");
 const feedbackBox = document.getElementById("feedbackBox");
 
-// NEW: Strengths / Tags / Grid
+// Strengths / Tags / Grid
 const strengthsWrap = document.getElementById("strengthsWrap");
 const strengthsList = document.getElementById("strengthsList");
 
@@ -50,7 +50,7 @@ const gStructure = document.getElementById("gStructure");
 const learnMoreWrap = document.getElementById("learnMoreWrap");
 const learnMoreBtn = document.getElementById("learnMoreBtn");
 const frameworkPanel = document.getElementById("frameworkPanel");
-const learnMoreText = document.getElementById("learnMoreText"); // ✅ ADDED
+const learnMoreText = document.getElementById("learnMoreText");
 
 // Model answer
 const modelWrap = document.getElementById("modelWrap");
@@ -67,49 +67,62 @@ function wc(text) {
   return t.split(/\s+/).filter(Boolean).length;
 }
 
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function showGate(message = "") {
+  if (!gateEl) return;
   gateEl.style.display = "flex";
-  gateMsg.textContent = message;
-  codeInput.focus();
+  if (gateMsg) gateMsg.textContent = message;
+  if (codeInput) codeInput.focus();
 }
 
 function hideGate() {
+  if (!gateEl) return;
   gateEl.style.display = "none";
 }
 
 function resetExtras() {
   // Strengths
-  strengthsWrap.style.display = "none";
-  strengthsList.innerHTML = "";
+  if (strengthsWrap) strengthsWrap.style.display = "none";
+  if (strengthsList) strengthsList.innerHTML = "";
 
   // Tags
-  tagsWrap.style.display = "none";
-  tagsRow.innerHTML = "";
+  if (tagsWrap) tagsWrap.style.display = "none";
+  if (tagsRow) tagsRow.innerHTML = "";
 
   // Grid
-  gridWrap.style.display = "none";
-  gEthical.textContent = "—";
-  gImpact.textContent = "—";
-  gLegal.textContent = "—";
-  gRecs.textContent = "—";
-  gStructure.textContent = "—";
+  if (gridWrap) gridWrap.style.display = "none";
+  if (gEthical) gEthical.textContent = "—";
+  if (gImpact) gImpact.textContent = "—";
+  if (gLegal) gLegal.textContent = "—";
+  if (gRecs) gRecs.textContent = "—";
+  if (gStructure) gStructure.textContent = "—";
 
-  // Learn more panel
-  learnMoreWrap.style.display = "none";
-  frameworkPanel.style.display = "none";
-  frameworkPanel.setAttribute("aria-hidden", "true");
-  learnMoreBtn.setAttribute("aria-expanded", "false");
-  if (learnMoreText) learnMoreText.textContent = ""; // ✅ SAFE CLEAR
+  // Learn more
+  if (learnMoreWrap) learnMoreWrap.style.display = "none";
+  if (frameworkPanel) {
+    frameworkPanel.style.display = "none";
+    frameworkPanel.setAttribute("aria-hidden", "true");
+  }
+  if (learnMoreBtn) learnMoreBtn.setAttribute("aria-expanded", "false");
+  if (learnMoreText) learnMoreText.textContent = "";
 
   // Model answer
-  modelWrap.style.display = "none";
-  modelAnswerEl.textContent = "";
+  if (modelWrap) modelWrap.style.display = "none";
+  if (modelAnswerEl) modelAnswerEl.textContent = "";
 }
 
 function resetFeedback() {
-  scoreBig.textContent = "—";
-  wordCountBig.textContent = "—";
-  feedbackBox.textContent = "";
+  if (scoreBig) scoreBig.textContent = "—";
+  if (wordCountBig) wordCountBig.textContent = "—";
+  if (feedbackBox) feedbackBox.textContent = "";
   resetExtras();
 }
 
@@ -120,37 +133,38 @@ async function loadConfig() {
     const data = await res.json();
     if (!data?.ok) return;
 
-   if (questionTextEl) questionTextEl.textContent = data.questionText || "Task loaded.";
-if (targetWordsEl) targetWordsEl.textContent = data.targetWords || "20-200";
-
-MIN_GATE = data.minWordsGate ?? 20;
-if (minGateEl) minGateEl.textContent = String(MIN_GATE);
-
-    TEMPLATE_TEXT = data.templateText || "";
-
-    if (data.courseBackUrl) {
+    // NAV FIRST (so a missing element elsewhere cannot prevent nav wiring)
+    if (backToCourse && data.courseBackUrl) {
       backToCourse.href = data.courseBackUrl;
       backToCourse.style.display = "inline-block";
     }
-    if (data.nextLessonUrl) {
+    if (nextLesson && data.nextLessonUrl) {
       nextLesson.href = data.nextLessonUrl;
       nextLesson.style.display = "inline-block";
     }
-  } catch {
-    // silent
+
+    if (questionTextEl) questionTextEl.textContent = data.questionText || "Task loaded.";
+    if (targetWordsEl) targetWordsEl.textContent = data.targetWords || "20-200";
+
+    MIN_GATE = data.minWordsGate ?? 20;
+    if (minGateEl) minGateEl.textContent = String(MIN_GATE);
+
+    TEMPLATE_TEXT = data.templateText || "";
+  } catch (e) {
+    console.error("loadConfig failed:", e);
   }
 }
 
 /* ---------------- Gate unlock ---------------- */
 async function unlock() {
-  const code = codeInput.value.trim();
+  const code = (codeInput?.value || "").trim();
   if (!code) {
-    gateMsg.textContent = "Please enter the access code from your lesson.";
+    if (gateMsg) gateMsg.textContent = "Please enter the access code from your lesson.";
     return;
   }
 
-  unlockBtn.disabled = true;
-  gateMsg.textContent = "Checking…";
+  if (unlockBtn) unlockBtn.disabled = true;
+  if (gateMsg) gateMsg.textContent = "Checking…";
 
   try {
     const res = await fetch("/api/unlock", {
@@ -163,106 +177,112 @@ async function unlock() {
     const data = await res.json();
 
     if (!res.ok || !data?.ok) {
-      gateMsg.textContent = "That code didn’t work. Check it and try again.";
+      if (gateMsg) gateMsg.textContent = "That code didn’t work. Check it and try again.";
       return;
     }
 
     hideGate();
     await loadConfig();
-  } catch {
-    gateMsg.textContent = "Network issue. Please try again.";
+  } catch (e) {
+    if (gateMsg) gateMsg.textContent = "Network issue. Please try again.";
+    console.error("unlock failed:", e);
   } finally {
-    unlockBtn.disabled = false;
+    if (unlockBtn) unlockBtn.disabled = false;
   }
 }
 
-unlockBtn.addEventListener("click", unlock);
-codeInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") unlock();
-});
+if (unlockBtn) unlockBtn.addEventListener("click", unlock);
+if (codeInput) {
+  codeInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") unlock();
+  });
+}
 
 /* ---------------- Word count live ---------------- */
 function updateWordCount() {
+  if (!answerTextEl || !wordCountBox) return;
   const n = wc(answerTextEl.value);
   wordCountBox.textContent = `Words: ${n}`;
 }
-answerTextEl.addEventListener("input", updateWordCount);
+if (answerTextEl) answerTextEl.addEventListener("input", updateWordCount);
 updateWordCount();
 
 /* ---------------- Template + clear ---------------- */
-insertTemplateBtn.addEventListener("click", () => {
-  if (!TEMPLATE_TEXT) return;
-  const existing = answerTextEl.value.trim();
-  if (!existing) {
-    answerTextEl.value = TEMPLATE_TEXT;
-  } else {
-    answerTextEl.value = `${TEMPLATE_TEXT}\n\n---\n\n${existing}`;
-  }
-  answerTextEl.focus();
-  updateWordCount();
-});
+if (insertTemplateBtn) {
+  insertTemplateBtn.addEventListener("click", () => {
+    if (!answerTextEl || !TEMPLATE_TEXT) return;
+    const existing = answerTextEl.value.trim();
+    answerTextEl.value = existing ? `${TEMPLATE_TEXT}\n\n---\n\n${existing}` : TEMPLATE_TEXT;
+    answerTextEl.focus();
+    updateWordCount();
+  });
+}
 
-clearBtn.addEventListener("click", () => {
-  answerTextEl.value = "";
-  updateWordCount();
-  resetFeedback();
-});
+if (clearBtn) {
+  clearBtn.addEventListener("click", () => {
+    if (!answerTextEl) return;
+    answerTextEl.value = "";
+    updateWordCount();
+    resetFeedback();
+  });
+}
 
-/* ---------------- Learn more toggle + tabs ---------------- */
-function setActiveTab() { /* tabs removed */ }
-
-learnMoreBtn?.addEventListener("click", () => {
-  const isOpen = frameworkPanel.style.display === "block";
-  if (isOpen) {
-    frameworkPanel.style.display = "none";
-    frameworkPanel.setAttribute("aria-hidden", "true");
-    learnMoreBtn.setAttribute("aria-expanded", "false");
-  } else {
-    frameworkPanel.style.display = "block";
-    frameworkPanel.setAttribute("aria-hidden", "false");
-    learnMoreBtn.setAttribute("aria-expanded", "true");
-  }
-});
+/* ---------------- Learn more toggle ---------------- */
+if (learnMoreBtn && frameworkPanel) {
+  learnMoreBtn.addEventListener("click", () => {
+    const isOpen = frameworkPanel.style.display === "block";
+    if (isOpen) {
+      frameworkPanel.style.display = "none";
+      frameworkPanel.setAttribute("aria-hidden", "true");
+      learnMoreBtn.setAttribute("aria-expanded", "false");
+    } else {
+      frameworkPanel.style.display = "block";
+      frameworkPanel.setAttribute("aria-hidden", "false");
+      learnMoreBtn.setAttribute("aria-expanded", "true");
+    }
+  });
+}
 
 /* ---------------- Render helpers ---------------- */
 function renderStrengths(strengths) {
+  if (!strengthsWrap || !strengthsList) return;
   if (!Array.isArray(strengths) || strengths.length === 0) {
     strengthsWrap.style.display = "none";
     strengthsList.innerHTML = "";
     return;
   }
-  strengthsList.innerHTML = strengths.slice(0, 3).map(s => `<li>${escapeHtml(s)}</li>`).join("");
+  strengthsList.innerHTML = strengths.slice(0, 3).map((s) => `<li>${escapeHtml(s)}</li>`).join("");
   strengthsWrap.style.display = "block";
 }
 
 function tagBadge(name, status) {
-  // status: "ok" | "mid" | "bad"
   const symbol = status === "ok" ? "✔" : status === "mid" ? "◐" : "✗";
   const cls = status === "ok" ? "tag ok" : status === "mid" ? "tag mid" : "tag bad";
   return `<span class="${cls}"><span class="tagStatus">${symbol}</span>${escapeHtml(name)}</span>`;
 }
 
 function renderTags(tags) {
-  // tags: supports [{name, status}] OR [{label, status}]
+  if (!tagsWrap || !tagsRow) return;
   if (!Array.isArray(tags) || tags.length === 0) {
     tagsWrap.style.display = "none";
     tagsRow.innerHTML = "";
     return;
   }
-  tagsRow.innerHTML = tags.map(t => tagBadge(t.name || t.label || "", t.status)).join(""); // ✅ UPDATED
+  tagsRow.innerHTML = tags
+    .map((t) => tagBadge(t.name || t.label || "", t.status))
+    .join("");
   tagsWrap.style.display = "block";
 }
 
 function renderGrid(grid) {
-  // Supports BOTH:
-  // 1) object grid: {ethical, impact, legal, recs, structure}
-  // 2) array grid:  [{label, status, detail}, ...]
+  if (!gridWrap || !gEthical || !gImpact || !gLegal || !gRecs || !gStructure) return;
+
   if (!grid) {
     gridWrap.style.display = "none";
     return;
   }
 
-  // Case 1: object-style grid
+  // Object-style grid (legacy)
   if (!Array.isArray(grid)) {
     gEthical.textContent = grid.ethical || "—";
     gImpact.textContent = grid.impact || "—";
@@ -273,9 +293,9 @@ function renderGrid(grid) {
     return;
   }
 
-  // Case 2: array-style grid from server.js (Role/Task/Context/Format)
+  // Array-style grid from server (Role/Task/Context/Format)
   const getStatus = (label) => {
-    const row = grid.find(r => (r.label || "").toLowerCase() === label.toLowerCase());
+    const row = grid.find((r) => (r.label || "").toLowerCase() === label.toLowerCase());
     return row ? (row.status || "—") : "—";
   };
 
@@ -288,45 +308,39 @@ function renderGrid(grid) {
 }
 
 function renderFramework(frameworkText) {
-  // frameworkText: string (Learn More content)
+  if (!learnMoreWrap || !frameworkPanel || !learnMoreBtn) return;
+
   if (!frameworkText) {
     learnMoreWrap.style.display = "none";
     return;
   }
 
-  if (learnMoreText) learnMoreText.textContent = frameworkText; // ✅ SAFE SET
+  if (learnMoreText) learnMoreText.textContent = frameworkText;
 
-  // show container (panel still collapsed until button clicked)
+  // Show wrapper, keep panel collapsed until learner clicks
   learnMoreWrap.style.display = "block";
   frameworkPanel.style.display = "none";
   frameworkPanel.setAttribute("aria-hidden", "true");
   learnMoreBtn.setAttribute("aria-expanded", "false");
 }
 
-function escapeHtml(s) {
-  return String(s || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 /* ---------------- Submit for marking ---------------- */
 async function mark() {
   resetFeedback();
 
-  const answerText = answerTextEl.value.trim();
+  const answerText = (answerTextEl?.value || "").trim();
   const words = wc(answerText);
 
+  if (!feedbackBox) return;
+
   if (words === 0) {
-    feedbackBox.textContent = "Write your answer first (aim for 20-100 words).";
+    feedbackBox.textContent = "Write your answer first (aim for at least 20 words).";
     return;
   }
 
-  submitBtn.disabled = true;
+  if (submitBtn) submitBtn.disabled = true;
   feedbackBox.textContent = "Marking…";
-  wordCountBig.textContent = String(words);
+  if (wordCountBig) wordCountBig.textContent = String(words);
 
   try {
     const res = await fetch("/api/mark", {
@@ -338,7 +352,7 @@ async function mark() {
 
     if (res.status === 401) {
       showGate("Session expired. Please re-enter the access code from your Payhip lesson.");
-      submitBtn.disabled = false;
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
@@ -350,52 +364,46 @@ async function mark() {
       return;
     }
 
-    wordCountBig.textContent = String(result.wordCount ?? words);
+    if (wordCountBig) wordCountBig.textContent = String(result.wordCount ?? words);
 
     if (result.gated) {
-      // Under 20 words: only show the "Please add..." message, no extras, no model answer.
-      scoreBig.textContent = "—";
+      if (scoreBig) scoreBig.textContent = "—";
       feedbackBox.textContent = result.message || "Please add to your answer.";
       resetExtras();
       return;
     }
 
-    // >= 20 words
-    scoreBig.textContent = `${result.score}/10`;
+    // >= MIN_GATE words
+    if (scoreBig) scoreBig.textContent = `${result.score}/10`;
 
-    // strengths + tags + grid + notes
     renderStrengths(result.strengths);
     renderTags(result.tags);
     renderGrid(result.grid);
 
-    // ✅ UPDATED: show message if feedback is not provided by server
     feedbackBox.textContent = result.feedback || result.message || "";
 
-    // ✅ UPDATED: accept either server key
     renderFramework(result.framework || result.learnMoreText);
 
-    // Model answer only if server returns it (already respects >=20 words rule)
-    if (result.modelAnswer) {
+    if (result.modelAnswer && modelAnswerEl && modelWrap) {
       modelAnswerEl.textContent = result.modelAnswer;
       modelWrap.style.display = "block";
-    } else {
+    } else if (modelWrap) {
       modelWrap.style.display = "none";
     }
-
-  } catch {
+  } catch (e) {
     feedbackBox.textContent = "Network issue. Please try again.";
+    console.error("mark failed:", e);
   } finally {
-    submitBtn.disabled = false;
+    if (submitBtn) submitBtn.disabled = false;
   }
 }
 
-submitBtn.addEventListener("click", mark);
+if (submitBtn) submitBtn.addEventListener("click", mark);
 
 /* ---------------- Initial load ---------------- */
-loadConfig().then(() => {
-  showGate();
-});
-// --- Spreadsheet viewer (single, clean) ---
+loadConfig().then(() => showGate());
+
+/* ---------------- Spreadsheet viewer (no horizontal scroll, wraps content) ---------------- */
 (() => {
   const SHEET_URL = "/data/FEthink_dummy_spreadsheets_with_variants.xlsx";
 
@@ -409,7 +417,7 @@ loadConfig().then(() => {
 
   async function loadWorkbook() {
     if (typeof XLSX === "undefined") {
-      throw new Error("XLSX library not loaded (check CDN is ABOVE app.js in index.html)");
+      throw new Error("XLSX library not loaded (check /vendor/xlsx.full.min.js is included ABOVE app.js in index.html)");
     }
     if (workbookCache) return workbookCache;
 
@@ -421,72 +429,59 @@ loadConfig().then(() => {
     return workbookCache;
   }
 
- function escapeHtml(s) {
-  return String(s ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+  function renderTableFromAOA(aoa) {
+    if (!Array.isArray(aoa) || aoa.length === 0) {
+      return `<div class="subtle">No data found.</div>`;
+    }
 
-function renderTableFromAOA(aoa, colWidthsPx = []) {
-  if (!Array.isArray(aoa) || aoa.length === 0) return "<div class='subtle'>No data found.</div>";
+    const header = aoa[0] || [];
+    const rows = aoa.slice(1);
 
-  const header = aoa[0] || [];
-  const rows = aoa.slice(1);
-
-  const cols = header.map((_, i) => {
-    const w = colWidthsPx[i] ?? 160;
-    return `<col style="width:${w}px">`;
-  }).join("");
-
-  const thead = `<thead><tr>${
-    header.map(h => {
-      const isWrap = /notes|details|comment/i.test(String(h));
-      return `<th class="${isWrap ? "wrap" : ""}">${escapeHtml(h)}</th>`;
-    }).join("")
-  }</tr></thead>`;
-
-  const tbody = `<tbody>${
-    rows.map(r => `<tr>${
-      header.map((_, i) => {
-        const cell = r?.[i] ?? "";
-        const colName = String(header[i] ?? "");
-        const wrap = /notes|details|comment/i.test(colName);
-        return `<td class="${wrap ? "wrap" : ""}" title="${escapeHtml(cell)}">${escapeHtml(cell)}</td>`;
+    const thead = `<thead><tr>${
+      header.map((h) => {
+        const isWrap = /notes|details|comment/i.test(String(h));
+        return `<th class="${isWrap ? "wrap" : ""}">${escapeHtml(h)}</th>`;
       }).join("")
-    }</tr>`).join("")
-  }</tbody>`;
+    }</tr></thead>`;
 
-  return `<table class="sheetPreviewTable"><colgroup>${cols}</colgroup>${thead}${tbody}</table>`;
-}
+    const tbody = `<tbody>${
+      rows.map((r) => `<tr>${
+        header.map((_, i) => {
+          const cell = r?.[i] ?? "";
+          const colName = String(header[i] ?? "");
+          const wrap = /notes|details|comment/i.test(colName);
+          return `<td class="${wrap ? "wrap" : ""}">${escapeHtml(cell)}</td>`;
+        }).join("")
+      }</tr>`).join("")
+    }</tbody>`;
 
-async function renderSheet(idx) {
-  try {
-    sheetTable.textContent = "Loading spreadsheet preview…";
-    const wb = await loadWorkbook();
-
-    const name = wb.SheetNames[idx];
-    if (!name) throw new Error(`Sheet ${idx + 1} not found. Available: ${wb.SheetNames.join(", ")}`);
-
-    const ws = wb.Sheets[name];
-
-    // Convert worksheet to array-of-arrays (keeps layout predictable)
-    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: "" });
-
-    // Column widths (px) tuned for your two sheets
-
-  sheetTable.innerHTML = renderTableFromAOA(aoa);
-  } catch (e) {
-    sheetTable.textContent = `Unable to load spreadsheet preview: ${e.message}`;
-    console.error("Spreadsheet preview error:", e);
+    // No colgroup widths: CSS (table-layout: fixed; width:100%) + wrapping handles fit
+    return `<table class="sheetPreviewTable">${thead}${tbody}</table>`;
   }
-}
+
+  async function renderSheet(idx) {
+    try {
+      sheetTable.textContent = "Loading spreadsheet preview…";
+      const wb = await loadWorkbook();
+
+      const name = wb.SheetNames[idx];
+      if (!name) throw new Error(`Sheet ${idx + 1} not found. Available: ${wb.SheetNames.join(", ")}`);
+
+      const ws = wb.Sheets[name];
+
+      // Convert worksheet to array-of-arrays
+      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: "" });
+
+      sheetTable.innerHTML = renderTableFromAOA(aoa);
+    } catch (e) {
+      sheetTable.textContent = `Unable to load spreadsheet preview: ${e.message}`;
+      console.error("Spreadsheet preview error:", e);
+    }
+  }
 
   sheetTasksBtn.addEventListener("click", () => renderSheet(0));
   sheetAttendanceBtn.addEventListener("click", () => renderSheet(1));
 
-  // Auto-load first sheet:
+  // Auto-load first sheet
   renderSheet(0);
 })();
